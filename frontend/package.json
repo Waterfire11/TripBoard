@@ -1,0 +1,14 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://stgit.dcs.gla.ac.uk/msc-project-for-information-technology/2024/it-project-2994180c/trackaboard-backend.git"
+  },
+  "private": true
+}
