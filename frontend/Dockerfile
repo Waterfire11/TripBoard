@@ -1,16 +1,17 @@
 # frontend/Dockerfile
-FROM node:18-alpine
+FROM node:20-alpine
 LABEL authors="Cheng JR"
 
 WORKDIR /app
 
-# Copy the dependency list and install
+# Copy package.json first and install the dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy the code of project
+# Then copy the entire code directory
 COPY . .
 
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
+# Start Vite and listen for all addresses, port 5173
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173", "--strictPort"]
