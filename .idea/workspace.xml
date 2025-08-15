@@ -5,39 +5,153 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="87eceb29-ff33-4f63-95cb-8399b69d62e9" name="更改" comment="">
+      <change afterPath="$PROJECT_DIR$/backend/accounts/serializers.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/accounts/urls.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/api_test.http" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/boards/models.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/boards/serializers.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/boards/urls.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/templates/account/me.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/templates/account/sessions.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/templates/index.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/templates/registration/login.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/templates/registration/signup.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/test.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/travelboard/views.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/api/auth.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/api/boards.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/api/client.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/Boards.jsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/Login.jsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/Register.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/PythonProject.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/PythonProject.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/accounts/models.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/accounts/tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/accounts/tests.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/accounts/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/accounts/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/backend/db.sqlite3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/travelboard/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/travelboard/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/travelboard/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/travelboard/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/main.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/main.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/vite.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/vite.config.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Dockerfile" />
+        <option value="HTTP Request" />
+        <option value="package.json" />
+        <option value="HTTP Private Environment File" />
+        <option value="JavaScript File" />
+        <option value="JSX File" />
+        <option value="Python Script" />
+        <option value="HTML File" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 6
-}]]></component>
+  <component name="HttpClientSelectedEnvironments">
+    <file url="file://$PROJECT_DIR$/backend/api_test.http" environment="dev" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6
+}</component>
   <component name="ProjectId" id="30HueTMqZFVGROLdVwaY2P8ihih" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;HTTP 请求.api_test | #1.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP 请求.api_test | Create Board.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP 请求.api_test | List Boards (uses the token we just saved).executor&quot;: &quot;Run&quot;,
+    &quot;HTTP 请求.api_test | List Boards.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP 请求.api_test | Login to get token.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP 请求.api_test | Login: get JWT token.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP 请求.api_test | Login: get JWT tokens.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP 请求.api_test | Login: get tokens.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP 请求.api_test中的所有.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP 请求.request | #1.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP 请求.request | #2.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP 请求.request | GET request to example server.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP 请求.request | Login.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP 请求.request中的所有.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.test.executor&quot;: &quot;Run&quot;,
+    &quot;Python.urls.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;develop&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Cheng JR/PycharmProjects/PythonProject/backend&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;rest.client.default.execution.environment&quot;: &quot;dev&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Cheng JR\PycharmProjects\PythonProject\backend" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Cheng JR\PycharmProjects\PythonProject\backend\templates" />
+      <recent name="C:\Users\Cheng JR\PycharmProjects\PythonProject\backend\templates\registration" />
+      <recent name="C:\Users\Cheng JR\PycharmProjects\PythonProject\backend\travelboard\templates\registration" />
+      <recent name="C:\Users\Cheng JR\PycharmProjects\PythonProject\backend" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="api_test | Login: get tokens" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/backend/api_test.http" executionIdentifier="Login: get tokens" runType="运行单个请求">
+      <method v="2" />
+    </configuration>
+    <configuration name="api_test | #1" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/backend/api_test.http" executionIdentifier="#1" runType="运行单个请求">
+      <method v="2" />
+    </configuration>
+    <configuration name="api_test中的所有" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" path="$PROJECT_DIR$/backend/api_test.http">
+      <method v="2" />
+    </configuration>
+    <configuration name="request | #1" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/request.http" executionIdentifier="#1" runType="运行单个请求">
+      <method v="2" />
+    </configuration>
+    <configuration name="request | #2" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/request.http" executionIdentifier="#2" index="2" runType="运行单个请求">
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="HTTP 请求.api_test中的所有" />
+        <item itemvalue="HTTP 请求.api_test | Login: get tokens" />
+        <item itemvalue="HTTP 请求.api_test | #1" />
+        <item itemvalue="HTTP 请求.request | #1" />
+        <item itemvalue="HTTP 请求.request | #2" />
+      </list>
+    </recent_temporary>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -53,11 +167,81 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1753296915650</updated>
-      <workItem from="1753296916703" duration="3306000" />
+      <workItem from="1753296916703" duration="17449000" />
+      <workItem from="1753385083492" duration="6404000" />
+      <workItem from="1753571073425" duration="1632000" />
+      <workItem from="1753572725501" duration="2352000" />
+      <workItem from="1753612744716" duration="166000" />
+      <workItem from="1753612919395" duration="3082000" />
+      <workItem from="1753625595290" duration="1857000" />
+      <workItem from="1753627893794" duration="472000" />
+      <workItem from="1753628378968" duration="751000" />
+      <workItem from="1753629397425" duration="136000" />
+      <workItem from="1753629770138" duration="1123000" />
+      <workItem from="1753633987852" duration="3637000" />
+      <workItem from="1753640762826" duration="2103000" />
+      <workItem from="1753643406878" duration="6599000" />
+      <workItem from="1753741488933" duration="30000" />
+      <workItem from="1753741562670" duration="1193000" />
+      <workItem from="1753743394555" duration="354000" />
+      <workItem from="1753743762467" duration="267000" />
+      <workItem from="1753744045551" duration="393000" />
+      <workItem from="1753825500825" duration="4734000" />
+      <workItem from="1753832377760" duration="521000" />
+      <workItem from="1753832914215" duration="733000" />
+      <workItem from="1753833662101" duration="5427000" />
+      <workItem from="1753858310441" duration="79000" />
+      <workItem from="1753858407393" duration="94000" />
+      <workItem from="1753858572462" duration="4199000" />
+      <workItem from="1753862817533" duration="1105000" />
+      <workItem from="1753863965342" duration="1010000" />
+      <workItem from="1753864994804" duration="1338000" />
+      <workItem from="1753878290620" duration="154000" />
+      <workItem from="1753878457863" duration="3153000" />
+      <workItem from="1754153992389" duration="14022000" />
+      <workItem from="1754249716289" duration="10210000" />
+      <workItem from="1754319932426" duration="7265000" />
+      <workItem from="1754327983262" duration="58245000" />
+      <workItem from="1754668902078" duration="8696000" />
+      <workItem from="1754685872318" duration="5521000" />
+      <workItem from="1754763600000" duration="4495000" />
+      <workItem from="1754774296163" duration="2909000" />
+      <workItem from="1754828561863" duration="371000" />
+      <workItem from="1754829146612" duration="31963000" />
+      <workItem from="1754932077026" duration="241000" />
+      <workItem from="1754934510046" duration="8370000" />
+      <workItem from="1754988539167" duration="296000" />
+      <workItem from="1754990042571" duration="490000" />
+      <workItem from="1755001851726" duration="61000" />
+      <workItem from="1755002408124" duration="40000" />
+      <workItem from="1755002525891" duration="10000" />
+      <workItem from="1755015562107" duration="1611000" />
+      <workItem from="1755017481160" duration="1006000" />
+      <workItem from="1755022284745" duration="990000" />
+      <workItem from="1755094125016" duration="2160000" />
+      <workItem from="1755100184917" duration="4000" />
+      <workItem from="1755100202859" duration="91000" />
+      <workItem from="1755100565532" duration="2400000" />
+      <workItem from="1755191703524" duration="28595000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/PythonProject$test.coverage" NAME="test 覆盖结果" MODIFIED="1754830239875" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/backend" />
+    <SUITE FILE_PATH="coverage/PythonProject$urls.coverage" NAME="urls 覆盖结果" MODIFIED="1754586190038" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/backend/travelboard" />
   </component>
 </project>
