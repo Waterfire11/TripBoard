@@ -5,43 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="87eceb29-ff33-4f63-95cb-8399b69d62e9" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/backend/accounts/serializers.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/accounts/urls.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/api_test.http" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/boards/models.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/boards/serializers.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/boards/urls.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/templates/account/me.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/templates/account/sessions.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/templates/index.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/templates/registration/login.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/templates/registration/signup.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/test.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/travelboard/views.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/api/auth.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/api/boards.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/api/client.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/Boards.jsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/Login.jsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/Register.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/PythonProject.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/PythonProject.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/accounts/models.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/accounts/tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/accounts/tests.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/accounts/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/accounts/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/backend/db.sqlite3" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/travelboard/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/travelboard/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/travelboard/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/travelboard/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/main.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/main.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/vite.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/vite.config.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -79,42 +43,42 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
-    &quot;HTTP 请求.api_test | #1.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP 请求.api_test | Create Board.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP 请求.api_test | List Boards (uses the token we just saved).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP 请求.api_test | List Boards.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP 请求.api_test | Login to get token.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP 请求.api_test | Login: get JWT token.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP 请求.api_test | Login: get JWT tokens.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP 请求.api_test | Login: get tokens.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP 请求.api_test中的所有.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP 请求.request | #1.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP 请求.request | #2.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP 请求.request | GET request to example server.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP 请求.request | Login.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP 请求.request中的所有.executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Python.test.executor&quot;: &quot;Run&quot;,
-    &quot;Python.urls.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;develop&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Cheng JR/PycharmProjects/PythonProject/backend&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;rest.client.default.execution.environment&quot;: &quot;dev&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "HTTP 请求.api_test | #1.executor": "Run",
+    "HTTP 请求.api_test | Create Board.executor": "Run",
+    "HTTP 请求.api_test | List Boards (uses the token we just saved).executor": "Run",
+    "HTTP 请求.api_test | List Boards.executor": "Run",
+    "HTTP 请求.api_test | Login to get token.executor": "Run",
+    "HTTP 请求.api_test | Login: get JWT token.executor": "Run",
+    "HTTP 请求.api_test | Login: get JWT tokens.executor": "Run",
+    "HTTP 请求.api_test | Login: get tokens.executor": "Run",
+    "HTTP 请求.api_test中的所有.executor": "Run",
+    "HTTP 请求.request | #1.executor": "Run",
+    "HTTP 请求.request | #2.executor": "Run",
+    "HTTP 请求.request | GET request to example server.executor": "Run",
+    "HTTP 请求.request | Login.executor": "Run",
+    "HTTP 请求.request中的所有.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.test.executor": "Run",
+    "Python.urls.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "C:/Users/Cheng JR/PycharmProjects/PythonProject/backend",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "rest.client.default.execution.environment": "dev",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\Cheng JR\PycharmProjects\PythonProject\backend" />
@@ -222,7 +186,7 @@
       <workItem from="1755100184917" duration="4000" />
       <workItem from="1755100202859" duration="91000" />
       <workItem from="1755100565532" duration="2400000" />
-      <workItem from="1755191703524" duration="28595000" />
+      <workItem from="1755191703524" duration="36996000" />
     </task>
     <servers />
   </component>
