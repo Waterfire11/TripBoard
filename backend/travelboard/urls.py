@@ -15,8 +15,25 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.http import HttpResponse
+from django.urls import path, include
+from . import views
+from .views import home
 
 urlpatterns = [
+    #path('', lambda request: HttpResponse("🚀 TravelBoard The backend service is started！"), name='home'),
+    path('', views.home, name='home'),
     path('admin/', admin.site.urls),
+
+    path('', views.home, name='home'),
+
+    path("api/auth/", include("accounts.urls")),
+
+    path('api/', include('boards.urls')),
+    path("api/auth/", include("rest_framework.urls")),
+
+    path('accounts/', include('django.contrib.auth.urls')),
+    path('accounts/signup/', views.signup, name='signup'),
+    path('accounts/me/', views.me, name='me'),
+    path('accounts/sessions/', views.sessions, name='sessions'),
 ]

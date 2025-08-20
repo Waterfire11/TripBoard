@@ -1,21 +1,17 @@
-
-
 services:
   db:
     image: postgres:14
-    restart: always
-    env_file:
-      - .env
+    environment:
+      POSTGRES_DB: travelboard
+      POSTGRES_USER: traveluser
+      POSTGRES_PASSWORD: changeme
     volumes:
       - db_data:/var/lib/postgresql/data
-    networks:
-      - app
+    ports:
+      - "5432:5432"
 
   redis:
     image: redis:7
-    restart: always
-    networks:
-      - app
 
   backend:
     build:
@@ -25,28 +21,27 @@ services:
       - .env
     volumes:
       - ./backend:/app
-    ports:
-      - "8000:8000"
     depends_on:
       - db
       - redis
-    networks:
-      - app
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    environment:
+      - VITE_API_BASE=http://localhost:8000
     volumes:
       - ./frontend:/app
       - /app/node_modules
     ports:
-      - "5173:5173"
-    networks:
-      - app
+      - "3000:3000"
+    command: npm run dev -- --host 0.0.0.0 --port 3000 --strictPort
 
 volumes:
   db_data:
-
-networks:
-  app:

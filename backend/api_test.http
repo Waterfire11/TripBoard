@@ -1,0 +1,32 @@
+### Login: get tokens
+POST http://localhost:8000/api/auth/token/
+Content-Type: application/json
+
+{
+  "username": "alice",
+  "password": "secret123"
+}
+
+### List boards (bearer from env)
+GET http://localhost:8000/api/boards/
+Authorization: Bearer {{access_token}}
+
+### Create board
+POST http://localhost:8000/api/boards/
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "title": "My Travel Kanban"
+}
+
+### Create card
+POST http://localhost:8000/api/cards/
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "board": "{{board_id}}",
+  "title": "Book a ticket",
+  "position": 0
+}

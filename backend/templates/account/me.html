@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My account</title>
+</head>
+<body>
+    <h1>My account</h1>
+    <ul>
+        <li>Username: {{ request.user.username }}</li>
+        <li>Email: {{ request.user.email|default:"(Not set)"}}</li>
+        <li>Last login: {{ request.user.last_login|date:"Y-m-d H:i" }}</li>
+        <li>Registration time: {{ request.user.date_joined|date:"Y-m-d H:i "}}</li>
+    </ul>
+    <p>
+        <a href="{% url 'password_change' %}">Change password</a> |
+        <a href="{% url 'logout' %}">Log out</a>
+    </p>
+
+    <p><a href="{% url 'sessions' %}">Manage my sessions</a></p>
+
+</body>
+</html>

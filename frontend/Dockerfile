@@ -1,5 +1,4 @@
-# frontend/Dockerfile
-FROM node:20-alpine
+FROM node:22.17.1
 LABEL authors="Cheng JR"
 
 WORKDIR /app
