@@ -30,6 +30,7 @@ urlpatterns = [
     path("api/auth/", include("accounts.urls")),
 
     path('api/', include('boards.urls')),
+    path("api/auth/", include("rest_framework.urls")),
 
     path('accounts/', include('django.contrib.auth.urls')),
     path('accounts/signup/', views.signup, name='signup'),

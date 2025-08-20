@@ -10,9 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-from pathlib import Path
-from datetime import timedelta
 import os
+from datetime import timedelta
+from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
 
     "accounts",
     "boards",
+    "django_filters",
 ]
 
 MIDDLEWARE = [
@@ -97,6 +98,10 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
+LANGUAGES = [
+    ("en", "English"),
+]
+
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
@@ -110,6 +115,17 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
+    "DATE_FORMAT": "%Y-%m-%d",
+    "DATETIME_FORMAT": "%Y-%m-%d %H:%M:%S",
+    "DATE_INPUT_FORMATS": ["%Y-%m-%d"],
+    "DATETIME_INPUT_FORMATS": ["%Y-%m-%d %H:%M:%S", "iso-8601"],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.OrderingFilter",
+        "rest_framework.filters.SearchFilter",
+    ]
 }
 
 SIMPLE_JWT = {

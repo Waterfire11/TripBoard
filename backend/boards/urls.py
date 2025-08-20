@@ -28,5 +28,5 @@ urlpatterns = [
     path("lists/<uuid:list_id>/cards/<uuid:pk>/reorder/", card_reorder, name="card-reorder"),
 
     # share-only
-    path("boards/shared/<uuid:token>/", SharedBoardView.as_view(), name="board-shared"),
+    path("boards/shared/<uuid:share_token>/", SharedBoardView.as_view(), name="board-shared"),
 ]
