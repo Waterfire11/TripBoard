@@ -1,8 +1,11 @@
 # boards/serializers.py
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from django.urls import reverse
 
-from .models import Board, List, Card
+from .models import Board, List, Card, BoardMember
+
+User = get_user_model()
 
 # ---- Cards ----
 class CardSerializer(serializers.ModelSerializer):
@@ -76,8 +79,8 @@ class BoardSerializer(serializers.ModelSerializer):
         if not obj.is_shared_readonly:
             return None
         # 构造 /api/boards/shared/<token>/ 的绝对 URL
-        path = reverse("board-shared", kwargs={"token": obj.share_token})
-        return request.build_absolute_uri(path)
+        url = reverse("board-shared", kwargs={"share_token": str(obj.share_token)})
+        return request.build_absolute_uri(url) if request else url
 
 # ---- 共享只读（用于 /boards/shared/<token>/）----
 class SharedCardSerializer(serializers.ModelSerializer):
@@ -97,3 +100,35 @@ class SharedBoardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Board
         fields = ("id", "title", "lists", "created_at", "updated_at")
+
+class BoardMemberSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(write_only=True, required=True)
+    user = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = BoardMember
+        fields = ("id", "user", "email", "role", "created_at")
+        read_only_fields = ("id", "user", "created_at")
+
+    def get_user(self, obj):
+        return {"id": obj.user_id, "email": obj.user.email}
+
+    def create(self, validated):
+        board = self.context["board"]
+        email = validated.pop("email")
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"email": "User not found"})
+        member, _ = BoardMember.objects.update_or_create(
+            board=board, user=user, defaults={"role": validated.get("role", BoardMember.ROLE_VIEWER)}
+        )
+        return member
+
+    def update(self, instance, validated):
+        # 只允许改 role
+        role = validated.get("role")
+        if role:
+            instance.role = role
+            instance.save(update_fields=["role"])
+        return instance

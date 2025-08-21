@@ -29,4 +29,4 @@ urlpatterns = [
 
     # share-only
     path("boards/shared/<uuid:share_token>/", SharedBoardView.as_view(), name="board-shared"),
-]
+] + router.urls

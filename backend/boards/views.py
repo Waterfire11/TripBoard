@@ -1,16 +1,29 @@
+import uuid
+import django_filters as df
 from django.db import transaction
-from django.db.models import Max, Sum, Prefetch, F
+from django.db.models import Max, Sum, Count, Prefetch, F, Q
+from django.urls import reverse
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from rest_framework import viewsets, permissions, generics, filters, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 from decimal import Decimal
-from .models import Board, List, Card
-from .serializers import BoardSerializer, ListSerializer, CardSerializer, SharedBoardSerializer
-import django_filters as df
-from django.urls import reverse
-import uuid
+from .models import Board, List, Card, BoardMember
+from .serializers import BoardSerializer, ListSerializer, CardSerializer, SharedBoardSerializer, BoardMemberSerializer
+
+def _can_edit_board(user, board):
+    """拥有者或被设为 editor 的成员可以编辑"""
+    if not user.is_authenticated:
+        return False
+    if board.owner_id == user.id:
+        return True
+    return BoardMember.objects.filter(
+        board=board, user=user, role=BoardMember.ROLE_EDITOR
+    ).exists()
+
 class CardFilter(df.FilterSet):
     title = df.CharFilter(field_name="title", lookup_expr="icontains")
     min_budget = df.NumberFilter(field_name="budget", lookup_expr="gte")
@@ -63,28 +76,6 @@ class BoardViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED if created_now else status.HTTP_200_OK,
         )
 
-    @action(detail=True, methods=["post"], url_path="share/enable")
-    def enable_share(self, request, pk=None):
-        board = self.get_object()  # 已受 IsOwner 保护
-
-        if not board.is_shared_readonly:
-            board.is_shared_readonly = True
-        if not board.share_token:
-            board.share_token = uuid.uuid4()
-
-        board.save(update_fields=["is_shared_readonly", "share_token", "updated_at"])
-
-        shared_url = request.build_absolute_uri(
-            reverse("board-shared", kwargs={"share_token": str(board.share_token)})
-        )
-        return Response(
-            {
-                "share_token": str(board.share_token),
-                "shared_url": shared_url,  # 可选
-            },
-            status=status.HTTP_201_CREATED,
-        )
-
     @action(detail=True, methods=["post"], url_path="share/disable")
     def disable_share(self, request, pk=None):
         board = self.get_object()
@@ -128,26 +119,125 @@ class BoardViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
+    @action(detail=True, methods=["get"], url_path="budget")
     def budget(self, request, pk=None):
-
         board = self.get_object()
         qs = Card.objects.filter(list__board=board)
         board_total = qs.aggregate(total=Sum("budget"))["total"] or Decimal("0")
         by_list = (
             qs.values("list__id", "list__title")
-              .annotate(total=Sum("budget"))
-              .order_by("list__title")
+            .annotate(total=Sum("budget"))
+            .order_by("list__title")
         )
         return Response({"board_total": board_total, "by_list": list(by_list)})
 
+    @action(detail=True, methods=["post"], url_path="share/enable")
+    def enable_share(self, request, pk=None):
+        return self._do_enable_share(request, self.get_object())
+
+    @action(detail=True, methods=["get"], url_path="stats", permission_classes=[permissions.IsAuthenticated, IsOwner],)
+    def stats(self, request, pk=None):
+        board = self.get_object()
+
+        cards_qs = Card.objects.filter(list__board=board)
+        agg = cards_qs.aggregate(
+            total_cards=Count("id"),
+            total_budget=Sum("budget"),
+            total_people=Sum("people"),
+        )
+        # 每个 List 的卡片数量
+        per_list = (
+            board.lists
+            .annotate(card_count=Count("cards"))
+            .values("id", "title", "position", "card_count")
+            .order_by("position")
+        )
+
+        data = {
+            "board": str(board.id),
+            "title": board.title,
+            "total_lists": board.lists.count(),
+            "total_cards": agg["total_cards"] or 0,
+            "total_budget": str(agg["total_budget"] or 0),
+            "total_people": agg["total_people"] or 0,
+            "per_list": list(per_list),
+        }
+        return Response(data)
+
+    def _assert_owner(self, board, user):
+        if board.owner_id != user.id:
+            self.permission_denied(self.request, message="Only owner can manage members")
+
+    @action(detail=True, methods=["get", "post"], url_path="members")
+    def members(self, request, pk=None):
+        board = self.get_object()
+        self._assert_owner(board, request.user)
+
+        if request.method == "GET":
+            qs = board.members.select_related("user").order_by("created_at")
+            data = BoardMemberSerializer(qs, many=True).data
+            return Response(data)
+
+        # POST: {email, role}
+        ser = BoardMemberSerializer(data=request.data, context={"board": board})
+        ser.is_valid(raise_exception=True)
+        member = ser.save()
+        return Response(BoardMemberSerializer(member).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["patch", "delete"], url_path=r"members/(?P<member_id>\d+)")
+    def member_detail(self, request, pk=None, member_id=None):
+        board = self.get_object()
+        self._assert_owner(board, request.user)
+        member = get_object_or_404(BoardMember, pk=member_id, board=board)
+
+        if request.method == "DELETE":
+            member.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        # PATCH: {role}
+        ser = BoardMemberSerializer(member, data=request.data, partial=True)
+        ser.is_valid(raise_exception=True)
+        member = ser.save()
+        return Response(BoardMemberSerializer(member).data)
+
+class IsOwnerOrBoardCollaborator(BasePermission):
+    """
+    - SAFE_METHODS: owner or viewer/editor 均可查看
+    - 修改: 需要 owner 或 editor
+    """
+    def _get_board(self, obj):
+        if isinstance(obj, Board):  return obj
+        if isinstance(obj, List):   return obj.board
+        if isinstance(obj, Card):   return obj.list.board
+        return None
+
+    def has_object_permission(self, request, view, obj):
+        board = self._get_board(obj)
+        if not board or not request.user.is_authenticated:
+            return False
+
+        if board.owner_id == request.user.id:
+            return True
+
+        # 成员是否有权限
+        exists = BoardMember.objects.filter(board=board, user=request.user).only("role").first()
+        if not exists:
+            return False
+
+        if request.method in SAFE_METHODS:
+            return True
+        return exists.role == BoardMember.ROLE_EDITOR
+
 class ListViewSet(viewsets.ModelViewSet):
     serializer_class = ListSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwner]
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrBoardCollaborator]
     ordering_fields = ["position", "created_at", "updated_at", "title"]
     ordering = ["position", "created_at", "id"]
 
     def get_queryset(self):
-        qs = List.objects.filter(board__owner=self.request.user)
+        qs = List.objects.filter(
+            Q(board__owner=self.request.user) | Q(board__members__user=self.request.user)
+        ).distinct()
         board_id = self.kwargs.get("board_id")
         if board_id:
             qs = qs.filter(board_id=board_id)
@@ -165,14 +255,17 @@ class ListViewSet(viewsets.ModelViewSet):
         )
 
         # ③ 同时优化外键与子集合
-        return (
-            qs.select_related("board")
-            .prefetch_related(Prefetch("cards", queryset=cards_qs))
-        )
+        qs = qs.select_related("board").prefetch_related(Prefetch("cards", queryset=cards_qs))
+        if "ordering" not in self.request.query_params:
+            qs = qs.order_by("position", "created_at", "id")
+        return qs
 
     @transaction.atomic
     def perform_create(self, serializer):
-        board = get_object_or_404(Board, pk=self.kwargs["board_id"], owner=self.request.user)
+        board = get_object_or_404(Board, pk=self.kwargs["board_id"])
+        if not _can_edit_board(self.request.user, board):
+            self.permission_denied(self.request, message="Only owner or editor can create lists")
+
         # 可选：前端传 position，不传就追加
         req_pos = self.request.data.get("position")
 
@@ -200,18 +293,29 @@ class ListViewSet(viewsets.ModelViewSet):
 
 class CardViewSet(viewsets.ModelViewSet):
     serializer_class = CardSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwner]
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrBoardCollaborator]
 
     def get_queryset(self):
+        base = (Card.objects
+                .filter(Q(list__board__owner=self.request.user) |
+                        Q(list__board__members__user=self.request.user))
+                .distinct()
+                .select_related("list", "list__board"))
+
         list_id = self.kwargs.get("list_id")
         if list_id:
-            return Card.objects.filter(list__board__owner=self.request.user, list_id=list_id)
+            base = base.filter(list_id=list_id)
 
-        return Card.objects.filter(list__board__owner=self.request.user)
+        if "ordering" not in self.request.query_params:
+            base = base.order_by("position", "created_at")
+        return base
 
     @transaction.atomic
     def perform_create(self, serializer):
         list_id = self.kwargs.get("list_id") or self.request.data.get("list")
+        lst = get_object_or_404(List, pk=list_id)
+        if not _can_edit_board(self.request.user, lst.board):
+            self.permission_denied(self.request, message="Only owner or editor can create cards")
         pos = serializer.validated_data.get("position")
 
         # 绑定 list_id 给序列化器
@@ -262,6 +366,9 @@ class CardViewSet(viewsets.ModelViewSet):
             serializer.save(list_id=old_list_id, position=new_pos)
         else:
             # —— 跨列表移动 —— #
+            # 先校验目标 list 所在 board 是否可编辑
+            if not _can_edit_board(self.request.user, new_list.board):
+                self.permission_denied(self.request, "Only owner or editor can move card to target list")
             # 1) 老列表收缩
             (Card.objects
              .select_for_update()
