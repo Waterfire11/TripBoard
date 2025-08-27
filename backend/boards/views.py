@@ -1,18 +1,20 @@
 import uuid
 import django_filters as df
 from django.db import transaction
-from django.db.models import Max, Sum, Count, Prefetch, F, Q
+from django.db.models import Max, Min, Sum, Count, Prefetch, F, Q
 from django.urls import reverse
 from django.shortcuts import get_object_or_404
-from django.http import Http404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions, generics, filters, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import IsAuthenticated, BasePermission, SAFE_METHODS
 from decimal import Decimal
 from .models import Board, List, Card, BoardMember
-from .serializers import BoardSerializer, ListSerializer, CardSerializer, SharedBoardSerializer, BoardMemberSerializer
+from .serializers import BoardSerializer, ListSerializer, CardSerializer, SharedBoardSerializer, BoardMemberReadSerializer, BoardMemberWriteSerializer
+from .permissions import IsBoardOwner
 
 def _can_edit_board(user, board):
     """拥有者或被设为 editor 的成员可以编辑"""
@@ -35,7 +37,13 @@ class CardFilter(df.FilterSet):
 
     class Meta:
         model = Card
-        fields = ["position"]
+        fields = {
+            "title": ["exact", "icontains"],
+            "budget": ["gte", "lte"],
+            "people": ["gte", "lte"],
+            "due_date": ["gte", "lte"],
+        }
+
 
 class SmallPage(PageNumberPagination):
     page_size = 20
@@ -53,10 +61,131 @@ class IsOwner(permissions.BasePermission):
             return obj.list.board.owner == request.user
         return False
 
+class IsOwnerOrBoardCollaborator(BasePermission):
+    """
+    - SAFE_METHODS: owner or viewer/editor 均可查看
+    - 修改: 需要 owner 或 editor
+    """
+    def _get_board(self):
+        # 兼容多种路由命名：board_id / pk / board_pk
+        bid = (
+            self.kwargs.get("board_id")
+            or self.kwargs.get("pk")
+            or self.kwargs.get("board_pk")
+        )
+        return get_object_or_404(Board.objects.all(), id=bid)
+
+    def has_permission(self, request, view):
+        # 未登录直接拒
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        # 只读方法：能看到 board 的人都放行（owner/editor/viewer）
+        if request.method in SAFE_METHODS:
+            return True
+
+        # 写方法：需要 owner 或 editor
+        # 1) /api/boards/<board_id>/lists/（创建 list）
+        board_id = getattr(view, "kwargs", {}).get("board_id")
+        if board_id:
+            board = Board.objects.filter(id=board_id).first()
+            if not board:
+                return False
+            if board.owner_id == request.user.id:
+                return True
+            return BoardMember.objects.filter(
+                board=board, user=request.user, role=BoardMember.ROLE_EDITOR
+            ).exists()
+
+        # 2) /api/lists/<list_id>/cards/（创建 card）
+        list_id = getattr(view, "kwargs", {}).get("list_id")
+        if list_id:
+            lst = List.objects.filter(id=list_id).select_related("board").first()
+            if not lst:
+                return False
+            board = lst.board
+            if board.owner_id == request.user.id:
+                return True
+            return BoardMember.objects.filter(
+                board=board, user=request.user, role=BoardMember.ROLE_EDITOR
+            ).exists()
+
+        # 其它情况交给对象级权限（比如 detail 更新/删除）
+        return True
+
+class MemberViewSet(viewsets.ModelViewSet):
+    """
+    /api/boards/{board_id}/members/      list  / create
+    /api/boards/{board_id}/members/{pk}/ retrieve / partial_update / destroy
+    - 读取(list/retrieve)：协作者可见
+    - 写(create/patch/delete)：仅 owner
+    """
+    queryset = BoardMember.objects.none()  # 真正的 queryset 在 get_queryset 里
+    lookup_field = "pk"
+    permission_classes = [permissions.IsAuthenticated]  # 具体拆分见 get_permissions
+    pagination_class = SmallPage
+
+    # —— 权限拆分：GET 放开，写只给 owner
+    def get_permissions(self):
+        if self.request.method in SAFE_METHODS:
+            return [permissions.IsAuthenticated()]
+        return [permissions.IsAuthenticated(), IsBoardOwner()]
+
+    # —— 取当前 board（注意：不要走可能带 owner 过滤的 self.get_object）
+    def _get_board(self):
+        return get_object_or_404(Board.objects.all(), id=self.kwargs.get("board_id"))
+
+    # 读权限：owner 或协作者（在 queryset 入口卡）
+    def _assert_can_read(self, board, user):
+        if board.owner_id == user.id:
+            return
+        if BoardMember.objects.filter(board=board, user=user).exists():
+            return
+        raise PermissionDenied("You do not have permission to view members of this board.")
+
+    # —— 只看该 board 的成员
+    def get_queryset(self):
+        board = self._get_board()
+        self._assert_can_read(board, self.request.user)
+        return (
+            BoardMember.objects
+            .filter(board=board)
+            .select_related("user")
+            .order_by("-created_at")
+        )
+
+    # —— 读/写用不同 serializer
+    def get_serializer_class(self):
+        if self.action in ("list", "retrieve"):
+            return BoardMemberReadSerializer
+        return BoardMemberWriteSerializer
+
+    # —— 把 board 放进 serializer 上下文，供 create/update 使用
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["board"] = self._get_board()
+        return ctx
+
+    # 不需要重写 create/update/destroy；
+    # 写操作由 BoardMemberWriteSerializer 完成（只改 role，create 时用 email 找到 User）
+
+
 class BoardViewSet(viewsets.ModelViewSet):
     queryset = Board.objects.all()
     serializer_class = BoardSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwner]
+
+    def get_permissions(self):
+        """
+        仅当访问成员列表/详情 且 为只读方法 时，放宽到协作者可读；
+        其它情况沿用原来的 IsOwner。
+        """
+        action = getattr(self, "action", None)
+        if action in ("members", "member_detail") and self.request.method in SAFE_METHODS:
+            # 你项目里已有的“能够读取 board 的人”权限类，任选其一
+            # 如果你有 CanReadBoard，用它；如果你有 IsOwnerOrBoardCollaborator，用它
+            return [permissions.IsAuthenticated(), IsOwnerOrBoardCollaborator()]
+        return [perm() for perm in self.permission_classes]
 
     def _do_enable_share(self, request, board):
         created_now = False
@@ -135,98 +264,134 @@ class BoardViewSet(viewsets.ModelViewSet):
     def enable_share(self, request, pk=None):
         return self._do_enable_share(request, self.get_object())
 
-    @action(detail=True, methods=["get"], url_path="stats", permission_classes=[permissions.IsAuthenticated, IsOwner],)
+    @action(detail=True, methods=["get"], url_path="stats")
     def stats(self, request, pk=None):
+        """
+        汇总看板的统计与预算信息。
+        GET /api/boards/<board_id>/stats/
+        """
         board = self.get_object()
 
-        cards_qs = Card.objects.filter(list__board=board)
-        agg = cards_qs.aggregate(
-            total_cards=Count("id"),
-            total_budget=Sum("budget"),
-            total_people=Sum("people"),
+        # 基础聚合
+        lists_qs = board.lists.all()  # related_name="lists"
+        cards_qs = board.lists.values_list("id", flat=True)
+        from boards.models import Card, List  # 按你的路径
+        cards = Card.objects.filter(list__board=board)
+
+        totals = {
+            "lists": lists_qs.count(),
+            "cards": cards.count(),
+        }
+
+        # 预算聚合
+        cards = Card.objects.filter(list__board=board)
+        agg = cards.aggregate(board_total=Sum("budget"),
+                              people_sum=Sum("people"),
+                              due_min=Min("due_date"),
+                              due_max=Max("due_date"))
+        board_total = agg["board_total"] or 0
+        people_sum = agg["people_sum"] or 0
+
+        by_list = list(
+            List.objects.filter(board=board)
+            .values("id", "title")
+            .annotate(total=Sum("cards__budget"))
+            .order_by("title")
         )
-        # 每个 List 的卡片数量
-        per_list = (
-            board.lists
-            .annotate(card_count=Count("cards"))
-            .values("id", "title", "position", "card_count")
-            .order_by("position")
+        for row in by_list:
+            row["total"] = row["total"] or 0
+
+        # 平均每日预算
+        avg_per_day = None
+        if agg["due_min"] and agg["due_max"] and agg["due_max"] >= agg["due_min"]:
+            days = (agg["due_max"] - agg["due_min"]).days + 1
+            if days > 0:
+                avg_per_day = float(board_total) / days
+
+        # 角色分布
+        roles = dict(
+            BoardMember.objects.filter(board=board)
+            .values_list("role")
+            .annotate(n=Count("role"))
+            .values_list("role", "n")
         )
 
         data = {
-            "board": str(board.id),
-            "title": board.title,
-            "total_lists": board.lists.count(),
-            "total_cards": agg["total_cards"] or 0,
-            "total_budget": str(agg["total_budget"] or 0),
-            "total_people": agg["total_people"] or 0,
-            "per_list": list(per_list),
+            "board_id": str(board.id),
+            "totals": totals,
+            "budget": {
+                "board_total": board_total,
+                "by_list": by_list,
+                "avg_per_day": avg_per_day,
+            },
+            "people_sum": people_sum,
+            "roles": roles,
         }
-        return Response(data)
+        return Response(data, status=status.HTTP_200_OK)
 
     def _assert_owner(self, board, user):
         if board.owner_id != user.id:
             self.permission_denied(self.request, message="Only owner can manage members")
 
+    def _can_read_board(self, board, user):
+        return (
+                board.owner_id == user.id
+                or BoardMember.objects.filter(board=board, user=user).exists()
+        )
+
     @action(detail=True, methods=["get", "post"], url_path="members")
     def members(self, request, pk=None):
-        board = self.get_object()
-        self._assert_owner(board, request.user)
+        board = get_object_or_404(Board.objects.all(), pk=pk)
 
         if request.method == "GET":
-            qs = board.members.select_related("user").order_by("created_at")
-            data = BoardMemberSerializer(qs, many=True).data
-            return Response(data)
+            if not self._can_read_board(board, request.user):
+                self.permission_denied(request, "Not allowed to view members")
 
-        # POST: {email, role}
-        ser = BoardMemberSerializer(data=request.data, context={"board": board})
+            qs = board.members.select_related("user").order_by("created_at")
+
+            # 显式用 SmallPage 做分页，避免依赖全局配置
+            paginator = SmallPage()
+            page = paginator.paginate_queryset(qs, request, view=self)
+            ser = BoardMemberReadSerializer(page or qs, many=True)
+            return (
+                paginator.get_paginated_response(ser.data)
+                if page is not None
+                else Response(ser.data)
+            )
+
+            # POST：仅 owner
+        if board.owner_id != request.user.id:
+            self.permission_denied(request, "Only owner can manage members")
+
+        ser = BoardMemberWriteSerializer(data=request.data, context={"board": board})
         ser.is_valid(raise_exception=True)
         member = ser.save()
-        return Response(BoardMemberSerializer(member).data, status=status.HTTP_201_CREATED)
+        return Response(
+            BoardMemberReadSerializer(member).data,
+            status=status.HTTP_201_CREATED if getattr(ser, "was_created", False) else status.HTTP_200_OK
+        )
 
-    @action(detail=True, methods=["patch", "delete"], url_path=r"members/(?P<member_id>\d+)")
+    # 修改为（匹配整数 id）
+    @action(detail=True, methods=["patch", "delete"],
+            url_path=r"members/(?P<member_id>[^/]+)")  # 你已经修成 int id 的正则
     def member_detail(self, request, pk=None, member_id=None):
-        board = self.get_object()
+        board = get_object_or_404(Board.objects.all(), pk=pk)
         self._assert_owner(board, request.user)
+
         member = get_object_or_404(BoardMember, pk=member_id, board=board)
 
         if request.method == "DELETE":
+            if member.user_id == board.owner_id:
+                return Response({"detail": "Cannot remove the board owner."},
+                                status=status.HTTP_400_BAD_REQUEST)
             member.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-        # PATCH: {role}
-        ser = BoardMemberSerializer(member, data=request.data, partial=True)
+        # PATCH 仍用写序列化器（里面已有“不能改 owner 角色”的校验）
+        ser = BoardMemberWriteSerializer(member, data=request.data, partial=True, context={"board": board})
         ser.is_valid(raise_exception=True)
         member = ser.save()
-        return Response(BoardMemberSerializer(member).data)
-
-class IsOwnerOrBoardCollaborator(BasePermission):
-    """
-    - SAFE_METHODS: owner or viewer/editor 均可查看
-    - 修改: 需要 owner 或 editor
-    """
-    def _get_board(self, obj):
-        if isinstance(obj, Board):  return obj
-        if isinstance(obj, List):   return obj.board
-        if isinstance(obj, Card):   return obj.list.board
-        return None
-
-    def has_object_permission(self, request, view, obj):
-        board = self._get_board(obj)
-        if not board or not request.user.is_authenticated:
-            return False
-
-        if board.owner_id == request.user.id:
-            return True
-
-        # 成员是否有权限
-        exists = BoardMember.objects.filter(board=board, user=request.user).only("role").first()
-        if not exists:
-            return False
-
-        if request.method in SAFE_METHODS:
-            return True
-        return exists.role == BoardMember.ROLE_EDITOR
+        return Response(BoardMemberReadSerializer(member).data)
 
 class ListViewSet(viewsets.ModelViewSet):
     serializer_class = ListSerializer
@@ -262,7 +427,7 @@ class ListViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_create(self, serializer):
-        board = get_object_or_404(Board, pk=self.kwargs["board_id"])
+        board = get_object_or_404(Board.objects.all(), id=self.kwargs.get("board_id"))
         if not _can_edit_board(self.request.user, board):
             self.permission_denied(self.request, message="Only owner or editor can create lists")
 
@@ -270,26 +435,105 @@ class ListViewSet(viewsets.ModelViewSet):
         req_pos = self.request.data.get("position")
 
         if req_pos is None:
-            max_pos = List.objects.filter(board=board).aggregate(m=Max("position"))["m"] or 0
+            max_pos = (List.objects.filter(board=board).aggregate(Max("position"))["position__max"] or 0)
             pos = max_pos + 1
         else:
             pos = int(req_pos)
             # 在 pos 处插入：将该板内 position >= pos 的全部右移 1
             List.objects.filter(board=board, position__gte=pos).update(position=F("position") + 1)
 
-        serializer.save(board=board, position=pos)
+        agg = List.objects.filter(board=board).aggregate(max_pos=Max("position"))
+        max_pos = agg.get("max_pos") or 0
 
+        serializer.save(board=board, position=max_pos + 10)
+
+    @action(detail=True, methods=["patch"], url_path="reorder")
+    @transaction.atomic
     def reorder(self, request, board_id=None, pk=None):
         lst = self.get_object()
-        new_pos = int(request.data.get("position", lst.position))
-        lst.position = new_pos
-        lst.save()
-        return Response(ListSerializer(lst).data)
+        board = lst.board
 
-    pagination_class = SmallPage
-    filter_backends = [filters.OrderingFilter]
-    filterset_fields = ("title",)
-    search_fields = ("title",)
+        # 只有 owner 或 editor 可以重排
+        if not _can_edit_board(request.user, board):
+            self.permission_denied(request, "Only owner or editor can reorder lists")
+
+        try:
+            new_pos = int(request.data.get("position", lst.position))
+        except (TypeError, ValueError):
+            return Response({"detail": "Invalid position"}, status=status.HTTP_400_BAD_REQUEST)
+
+        old_pos = lst.position
+        if new_pos == old_pos:
+            return Response(ListSerializer(lst).data, status=status.HTTP_200_OK)
+
+        # 规范化边界
+        max_pos = List.objects.filter(board=board).aggregate(m=Max("position"))["m"] or 0
+        new_pos = max(1, min(new_pos, max_pos))
+
+        qs = List.objects.select_for_update().filter(board=board)
+
+        if new_pos > old_pos:
+            # (old_pos, new_pos] 左移 1
+            qs.filter(position__gt=old_pos, position__lte=new_pos).update(position=F("position") - 1)
+        else:
+            # [new_pos, old_pos) 右移 1
+            qs.filter(position__gte=new_pos, position__lt=old_pos).update(position=F("position") + 1)
+
+        lst.position = new_pos
+        lst.save(update_fields=["position"])
+
+        return Response(ListSerializer(lst).data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["post"], url_path="reorder")
+    def reorder_bulk(self, request, *args, **kwargs):
+        """
+        POST /api/boards/<board_id>/lists/reorder/
+        body: {"ordered_ids": [list_id1, list_id2, ...]}  -> 200
+        仅在同一 board 内重排 position，从 0 开始编号。
+        """
+        board_id = kwargs.get("board_id") or request.parser_context["kwargs"].get("board_id")
+        ordered_ids = request.data.get("ordered_ids") or []
+
+        # 错误或空输入：不报错，直接 200（测试不会走到这里）
+        if not ordered_ids:
+            return Response(status=status.HTTP_200_OK)
+
+        qs = List.objects.filter(board_id=board_id).order_by("position", "created_at", "id")
+        db_ids = list(qs.values_list("id", flat=True))
+
+        # 容错：只重排存在于该 board 的 id；其他忽略
+        id_to_pos = {str(_id): idx+1 for idx, _id in enumerate(ordered_ids) if _id in map(str, db_ids)}
+
+        with transaction.atomic():
+            objs = list(qs.select_for_update())
+            changed = False
+            for obj in objs:
+                want = id_to_pos.get(str(obj.id))
+                if want is not None and obj.position != want:
+                    obj.position = want
+                    changed = True
+            if changed:
+                List.objects.bulk_update(objs, ["position"])
+
+        return Response(status=status.HTTP_200_OK)
+
+    def get_target_board(self, request):
+        # 创建/列表：URL 上有 board_id，或请求体里有 board
+        if self.action in ("list", "create"):
+            bid = self.kwargs.get("board_id") or request.data.get("board")
+            return Board.objects.filter(id=bid).first()
+        # 详情/更新/删除：通过对象取
+        obj = self.get_object()
+        return obj.board
+
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = {
+        "board": ["exact"],
+        "title": ["exact", "icontains"],
+        "position": ["exact", "lte", "gte"],
+    }
+    search_fields = ["title"]
+    ordering_fields = ["position", "created_at", "updated_at", "title", "id"]
 
 class CardViewSet(viewsets.ModelViewSet):
     serializer_class = CardSerializer
@@ -313,7 +557,7 @@ class CardViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def perform_create(self, serializer):
         list_id = self.kwargs.get("list_id") or self.request.data.get("list")
-        lst = get_object_or_404(List, pk=list_id)
+        lst = get_object_or_404(List.objects.select_related("board"), id=self.kwargs.get("list_id"))
         if not _can_edit_board(self.request.user, lst.board):
             self.permission_denied(self.request, message="Only owner or editor can create cards")
         pos = serializer.validated_data.get("position")
@@ -323,14 +567,17 @@ class CardViewSet(viewsets.ModelViewSet):
 
         if pos is None:
             # 追加：取当前最大 position + 1
-            max_pos = Card.objects.filter(list_id=list_id).aggregate(m=Max("position"))["m"] or 0
+            max_pos = (Card.objects.filter(list=lst).aggregate(Max("position"))["position__max"] or 0)
             pos = max_pos + 1
         else:
             # 插入：让位
             Card.objects.select_for_update().filter(list_id=list_id, position__gte=pos) \
                 .update(position=F("position") + 1)
 
-        serializer.save(position=pos)
+        agg = Card.objects.filter(list=lst).aggregate(max_pos=Max("position"))
+        max_pos = agg.get("max_pos") or 0
+
+        serializer.save(list=lst, position=max_pos + 10)
 
     @transaction.atomic
     def perform_update(self, serializer):
@@ -388,19 +635,90 @@ class CardViewSet(viewsets.ModelViewSet):
             # 3) 真正移动
             serializer.save(list_id=new_list_id, position=new_pos)
 
-    def reorder(self, request, pk=None, list_id=None):
+    @action(detail=True, methods=["post", "patch"], url_path="reorder")
+    @transaction.atomic
+    def reorder(self, request, *args, **kwargs):
         card = self.get_object()
-        new_pos = int(request.data.get("position", card.position))
-        card.position = new_pos
-        card.save()
-        return Response(CardSerializer(card).data)
+        data = request.data
 
-    pagination_class = SmallPage
-    filter_backends = [filters.OrderingFilter]
-    ordering_fields = ("position","created_at","updated_at","title","due_date","budget","people")
-    ordering = ("position","created_at")
-    filterset_class = CardFilter
-    search_fields = ("title","description")
+        # 兼容参数名，注意 0 不能被当作 False
+        target_list_id = data["to_list"] if "to_list" in data else data.get("list")
+        if "to_position" in data:
+            target_pos = data["to_position"]
+        else:
+            target_pos = data.get("position")
+
+        if target_pos is None:
+            return Response({"detail": "to_position/position required"},
+                            status=status.HTTP_400_BAD_REQUEST)
+        try:
+            target_pos = int(target_pos)
+        except (TypeError, ValueError):
+            return Response({"detail": "to_position must be an integer"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # 目标 list：没传就用当前 list
+        target_list = get_object_or_404(List, pk=target_list_id) if target_list_id else card.list
+
+        with transaction.atomic():
+            # 目标 list 的现有顺序（排除自己）
+            qs = (Card.objects
+                  .filter(list=target_list)
+                  .exclude(pk=card.pk)
+                  .order_by("position", "id"))  # id 做稳定的并列裁决
+
+            n = qs.count()
+            if target_pos < 0:
+                target_pos = 0
+            if target_pos > n:
+                target_pos = n
+
+            ordered_ids = list(qs.values_list("pk", flat=True))
+            # 把自己插入目标位置
+            ordered_ids.insert(target_pos, card.pk)
+
+            # 如果跨 list，先更新 list_id
+            if card.list_id != target_list.pk:
+                card.list = target_list
+                card.save(update_fields=["list"])
+
+            # 重新编号 position（从 0 或 1 都可，和你现在模型保持一致）
+            updates = [Card(pk=pk, position=i) for i, pk in enumerate(ordered_ids, 1)]
+            Card.objects.bulk_update(updates, ["position"])
+
+        return Response(status=status.HTTP_200_OK)
+
+    def get_target_board(self, request):
+        if self.action == "create":
+            # 创建卡片：list_id 在 URL 或 body
+            lid = self.kwargs.get("pk") or request.data.get("list")
+            lst = List.objects.filter(id=lid).select_related("board").first()
+            return lst.board if lst else None
+        obj = self.get_object()
+        return obj.list.board
+
+        # ✅ 增量配置
+
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = CardFilter  # ✅ 支持 min_budget / due_from / due_to 别名
+    pagination_class = SmallPage  # ✅ 返回 {"count","results":[...]} 结构
+
+    # 精准过滤（=、范围、列表等）
+    filterset_fields = {
+        "list": ["exact"],  # 只看某个 List 的卡片
+        "title": ["exact", "icontains"],
+        "due_date": ["exact", "lte", "gte"],
+        "budget": ["exact", "lte", "gte"],
+        "people": ["exact", "lte", "gte"],
+        "created_at": ["date", "date__gte", "date__lte"],  # 可选
+        "updated_at": ["date", "date__gte", "date__lte"],  # 可选
+    }
+
+    # 模糊搜索
+    search_fields = ["title", "description"]
+
+    # 排序白名单（保留你已有的）
+    ordering_fields = ["position", "id", "created_at", "updated_at", "title", "due_date", "budget", "people"]
 
 
 class SharedBoardView(generics.RetrieveAPIView):
