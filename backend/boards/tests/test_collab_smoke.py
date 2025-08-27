@@ -4,6 +4,11 @@ from rest_framework.test import APIClient
 from django.contrib.auth import get_user_model
 from boards.models import BoardMember
 
+@pytest.fixture
+def user(make_user):
+    # 让原先用 `user` 的测试也能工作
+    return make_user()
+
 User = get_user_model()
 
 def make_user(username: str, email: str, password: str = "x12345678"):
@@ -70,3 +75,50 @@ def test_collab_can_read_and_edit_cards(board_factory, user):
     assert r.status_code == 200
     r = c3.post(f"/api/lists/{list_id}/cards/", {"title": "nope"}, format="json")
     assert r.status_code in (403, 405)
+
+@pytest.mark.django_db
+def test_owner_can_manage_members(board_factory, make_user):
+    owner  = make_user(username="o", email="o@test.com")
+    editor = make_user(username="e", email="e@test.com")
+    viewer = make_user(username="v", email="v@test.com")
+
+    board = board_factory(owner=owner)
+    c = APIClient(); c.force_authenticate(owner)
+
+    # 邀请 editor
+    r = c.post(f"/api/boards/{board.id}/members/", data={"email": editor.email, "role": "editor"}, format="json")
+    assert r.status_code == 201
+    eid = r.data["id"]
+
+    # 列表里应有 editor
+    r = c.get(f"/api/boards/{board.id}/members/")
+    assert r.status_code == 200
+
+    # 兼容：如果有分页就是 dict["results"]，否则直接就是 list
+    data = r.data
+    results = data["results"] if isinstance(data, dict) and "results" in data else data
+
+    # 断言里用 results
+    assert any(m.get("email") == editor.email for m in results)
+
+    # 将 editor 改为 viewer
+    r = c.patch(f"/api/boards/{board.id}/members/{eid}/", data={"role": "viewer"}, format="json")
+    assert r.status_code == 200
+
+    # 删除成员
+    r = c.delete(f"/api/boards/{board.id}/members/{eid}/")
+    assert r.status_code == 204
+
+
+@pytest.mark.django_db
+def test_non_owner_cannot_manage_members(board_factory, make_user):
+    owner  = make_user(username="o", email="o@test.com")
+    editor = make_user(username="e", email="e@test.com")
+    other  = make_user(username="x", email="x@test.com")
+
+    board = board_factory(owner=owner)
+    c = APIClient(); c.force_authenticate(editor)
+
+    # 非 owner 创建应被拒
+    r = c.post(f"/api/boards/{board.id}/members/", data={"email": other.email, "role": "viewer"}, format="json")
+    assert r.status_code in (403, 401)

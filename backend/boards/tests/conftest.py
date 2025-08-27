@@ -8,16 +8,23 @@ from django.contrib.auth import get_user_model
 from boards.models import Board
 
 @pytest.fixture
-def user(db):
-    User = get_user_model()
-    return User.objects.create_user(username="tester", password="pass123")
+def make_user(db):
+    """既可作为 fixture 形参注入，也可被 import 当函数调用."""
+    def _make_user(username="u", email=None, password="pass"):
+        if not email:
+            email = f"{username}@example.com"
+        return get_user_model().objects.create_user(
+            username=username, email=email, password=password
+        )
+    return _make_user
 
 @pytest.fixture
-def board_factory(db, user):
-    def _create(**kwargs):
-        return Board.objects.create(
-            owner=user,
-            title=kwargs.get("title", "Readonly project"),
-            # 其它必填字段按你的模型来（如果有）
-        )
-    return _create
+def board_factory(db, make_user):
+    """owner 可传用户或用户名；默认会创建一个 owner。"""
+    def _factory(owner=None, title="Readonly project"):
+        if owner is None:
+            owner = make_user("owner")
+        elif isinstance(owner, str):
+            owner = make_user(owner)
+        return Board.objects.create(owner=owner, title=title)
+    return _factory
