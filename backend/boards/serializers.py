@@ -101,34 +101,99 @@ class SharedBoardSerializer(serializers.ModelSerializer):
         model = Board
         fields = ("id", "title", "lists", "created_at", "updated_at")
 
-class BoardMemberSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(write_only=True, required=True)
-    user = serializers.SerializerMethodField(read_only=True)
+class BoardMemberReadSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+    email = serializers.SerializerMethodField()  # 从 user 派生
 
     class Meta:
         model = BoardMember
         fields = ("id", "user", "email", "role", "created_at")
-        read_only_fields = ("id", "user", "created_at")
+        read_only_fields = ("id", "user", "email", "created_at")
 
     def get_user(self, obj):
-        return {"id": obj.user_id, "email": obj.user.email}
+        u = getattr(obj, "user", None)
+        if u:
+            return {"id": str(u.id), "username": u.username, "email": u.email}
+        return None
 
-    def create(self, validated):
+    def get_email(self, obj):
+        u = getattr(obj, "user", None)
+        return getattr(u, "email", None) if u else None
+
+class BoardMemberWriteSerializer(serializers.ModelSerializer):
+    email = serializers.CharField(write_only=True, required=True, trim_whitespace=True)
+
+    class Meta:
+        model = BoardMember
+        fields = ("email", "role")
+
+    def validate_role(self, value):
+        if value not in ("owner", "editor", "viewer"):
+            raise serializers.ValidationError("Invalid role.")
+        return value
+
+    def validate(self, attrs):
         board = self.context["board"]
-        email = validated.pop("email")
+        role = attrs.get("role")
+
+        # 统一清理邮箱：替换全角空格、去前后空白
+        email = (attrs.get("email") or "").replace("\u3000", " ").strip()
+        attrs["email"] = email  # 规范化回写，避免后续使用到原值
+
+        # —— 更新：禁止 owner 降级；禁止把非 owner 提升为 owner
+        if getattr(self, "instance", None):
+            if self.instance.user_id == board.owner_id and role and role != "owner":
+                raise serializers.ValidationError({"role": "Owner role cannot be changed."})
+            if role == "owner" and self.instance.user_id != board.owner_id:
+                raise serializers.ValidationError({"role": "Only the board owner can have role 'owner'."})
+            return attrs
+
+        # —— 创建：用规范化后的邮箱查用户（不区分大小写）
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({
+                "email": "User not found. Tip: check for extra spaces and ensure the user exists in this environment."
+            })
+
+        # 保护 owner：只有 board.owner 才能是 'owner' 角色
+        if user.id == board.owner_id and role != "owner":
+            raise serializers.ValidationError({"role": "Owner must have role 'owner'."})
+        if user.id != board.owner_id and role == "owner":
+            raise serializers.ValidationError({"role": "Only the board owner can have role 'owner'."})
+
+        # 缓存 user 给 create() 用，避免重复查询
+        self._validated_user = user
+        return attrs
+
+    def create(self, validated_data):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+
+        board = self.context["board"]
+        # 统一清洗：全角空格→半角、前后空白去掉、大小写不敏感
+        email = (validated_data.pop("email") or "").replace("\u3000", " ").strip().lower()
+        role  = validated_data["role"]
+
+        try:
+            user = User.objects.get(email__iexact=email)
         except User.DoesNotExist:
             raise serializers.ValidationError({"email": "User not found"})
-        member, _ = BoardMember.objects.update_or_create(
-            board=board, user=user, defaults={"role": validated.get("role", BoardMember.ROLE_VIEWER)}
+
+        member, created = BoardMember.objects.get_or_create(
+            board=board, user=user, defaults={"role": role}
         )
+        self.was_created = created
+        if not created and member.role != role:
+            member.role = role
+            member.save(update_fields=["role"])
         return member
 
-    def update(self, instance, validated):
-        # 只允许改 role
-        role = validated.get("role")
-        if role:
+    def update(self, instance, validated_data):
+        role = validated_data.get("role")
+        if role and role != instance.role:
             instance.role = role
             instance.save(update_fields=["role"])
         return instance

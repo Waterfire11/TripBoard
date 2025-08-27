@@ -20,6 +20,10 @@ class Board(TimeStampedModel):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
 
+    def role_of(self, user):
+        m = self.members.filter(user=user).first()
+        return m.role if m else None
+
 
 class List(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
