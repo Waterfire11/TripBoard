@@ -6,11 +6,7 @@ import sys
 
 def main():
     """Run administrative tasks."""
-<<<<<<< HEAD
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'travelboard.settings')
-=======
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'travelkanban.settings')
->>>>>>> gitlab/tripboard-import
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
