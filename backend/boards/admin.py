@@ -1,8 +1,4 @@
 from django.contrib import admin
-<<<<<<< HEAD
-
-# Register your models here.
-=======
 from .models import Board, List, Card
 
 @admin.register(Board)
@@ -22,4 +18,3 @@ class CardAdmin(admin.ModelAdmin):
     list_display = ('title', 'list', 'due_date', 'position', 'created_at')
     list_filter = ('list__board', 'due_date')
     search_fields = ('title', 'description')
->>>>>>> gitlab/tripboard-import
