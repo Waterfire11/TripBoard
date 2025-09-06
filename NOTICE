@@ -1,0 +1,24 @@
+Third-Party Notices
+
+This project includes or derives from the following third-party works:
+
+- shadcn/ui (MIT) — https://ui.shadcn.com
+  Local UI components under `frontend/src/components/ui/*` are derived and customized.
+
+- Radix UI (MIT) — https://www.radix-ui.com/primitives
+  Used as primitives for accessible components (e.g., dialog, dropdown). If example code was adapted, it is annotated in file headers.
+
+- @hello-pangea/dnd (MIT) — https://github.com/hello-pangea/dnd
+  Used for drag-and-drop interactions. If example code was adapted, it is annotated in file headers.
+
+- Tailwind CSS (MIT) — https://tailwindcss.com
+  Utility-first CSS framework.
+
+- Icons: lucide-react (MIT) — https://lucide.dev
+  If any SVG icons were copied inline, their source and license are noted where applicable.
+
+- Fonts: Inter (SIL OFL 1.1)
+  Via next/font. See font license for details.
+
+- Maps & Data:
+  Map tiles and styles by Mapbox. Data © OpenStreetMap contributors. Attribution is shown in-app.
